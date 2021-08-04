@@ -62,7 +62,16 @@ def _stringify_time_unit(value: int, unit: str) -> str:
 
 
 def discord_timestamp(timestamp: ValidTimestamp, format: TimestampFormats = TimestampFormats.DATE_TIME) -> str:
-    """Create and format a Discord flavored markdown timestamp."""
+    """
+    Format a timestamp as a Discord-flavored Markdown timestamp.
+
+    `timestamp` can be one of the following:
+
+    * POSIX timestamp in seconds
+    * datetime object that is either aware or naïve; assume UTC if it is naïve
+    * date object
+    * timedelta or relativedelta object which represents a duration relative to the POSIX Epoch
+    """
     if format not in TimestampFormats:
         raise ValueError(f"Format can only be one of {', '.join(TimestampFormats.args)}, not {format}.")
 
