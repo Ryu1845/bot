@@ -8,7 +8,6 @@ import dateutil.parser
 from dateutil.relativedelta import relativedelta
 
 EPOCH_AWARE = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
-RFC1123_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 DISCORD_TIMESTAMP_REGEX = re.compile(r"<t:(\d+):f>")
 
 _DURATION_REGEX = re.compile(
@@ -171,11 +170,6 @@ def time_since(timestamp: Union[str, datetime.datetime]) -> str:
     remains until `timestamp` is reached. See `time.discord_timestamp`'s documentation for details.
     """
     return discord_timestamp(_normalise(timestamp), TimestampFormats.RELATIVE)
-
-
-def parse_rfc1123(stamp: str) -> datetime.datetime:
-    """Parse RFC1123 time string into datetime."""
-    return datetime.datetime.strptime(stamp, RFC1123_FORMAT).replace(tzinfo=datetime.timezone.utc)
 
 
 def format_infraction(timestamp: Union[str, datetime.datetime]) -> str:
