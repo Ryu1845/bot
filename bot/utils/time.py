@@ -20,7 +20,7 @@ _DURATION_REGEX = re.compile(
 )
 
 
-ValidTimestamp = Union[int, float, str, datetime.datetime, datetime.date, datetime.timedelta, relativedelta]
+ValidTimestamp = Union[int, float, str, datetime.datetime, datetime.date]
 
 
 class TimestampFormats(Enum):
@@ -70,7 +70,6 @@ def discord_timestamp(timestamp: ValidTimestamp, format: TimestampFormats = Time
     * ISO 8601 string with or without a timezone
     * datetime object that is either aware or naïve; assume UTC if it is naïve
     * date object
-    * timedelta or relativedelta object which represents a duration relative to the POSIX Epoch
     """
     if format not in TimestampFormats:
         raise ValueError(f"Format can only be one of {', '.join(TimestampFormats.args)}, not {format}.")
@@ -80,10 +79,6 @@ def discord_timestamp(timestamp: ValidTimestamp, format: TimestampFormats = Time
         timestamp = (_normalise(timestamp) - EPOCH_AWARE).total_seconds()
     elif isinstance(timestamp, datetime.date):
         timestamp = (timestamp - EPOCH_AWARE.date()).total_seconds()
-    elif isinstance(timestamp, datetime.timedelta):
-        timestamp = timestamp.total_seconds()
-    elif isinstance(timestamp, relativedelta):
-        timestamp = relativedelta_to_timedelta(timestamp).total_seconds()
 
     return f"<t:{int(timestamp)}:{format.value}>"
 
