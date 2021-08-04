@@ -115,6 +115,43 @@ class TimeTests(unittest.TestCase):
             with self.subTest(delta=delta, precision=precision, max_units=max_units, expected=expected):
                 self.assertEqual(time.humanize_delta(delta, precision, max_units), expected)
 
+    def test_humanize_delta_max_units(self):
+        """humanize_delta should clamp the unit count to max_units, preferring to omit the smallest units."""
+        test_cases = (
+            (
+                relativedelta(years=2, months=3, days=4, hours=14, minutes=55, seconds=31, microseconds=11),
+                (6, '2 years, 3 months, 4 days, 14 hours, 55 minutes and 31 seconds'),
+                (5, '2 years, 3 months, 4 days, 14 hours and 55 minutes'),
+                (4, '2 years, 3 months, 4 days and 14 hours'),
+                (3, '2 years, 3 months and 4 days'),
+                (2, '2 years and 3 months'),
+                (1, '2 years'),
+            ),
+            (
+                relativedelta(months=5, days=15, hours=22, minutes=19, microseconds=45),
+                (6, '5 months, 15 days, 22 hours and 19 minutes'),
+                (5, '5 months, 15 days, 22 hours and 19 minutes'),
+                (4, '5 months, 15 days, 22 hours and 19 minutes'),
+                (3, '5 months, 15 days and 22 hours'),
+                (2, '5 months and 15 days'),
+                (1, '5 months'),
+            ),
+            (
+                relativedelta(days=9, hours=6, seconds=47),
+                (6, '9 days, 6 hours and 47 seconds'),
+                (5, '9 days, 6 hours and 47 seconds'),
+                (4, '9 days, 6 hours and 47 seconds'),
+                (3, '9 days, 6 hours and 47 seconds'),
+                (2, '9 days and 6 hours'),
+                (1, '9 days'),
+            ),
+        )
+
+        for delta, *cases in test_cases:
+            for max_units, expected in cases:
+                with self.subTest(delta=delta, precision="seconds", max_units=max_units, expected=expected):
+                    self.assertEqual(time.humanize_delta(delta, "seconds", max_units), expected)
+
     def test_humanize_delta_precision(self):
         """humanize_delta should omit units past the given precision."""
         test_cases = (
