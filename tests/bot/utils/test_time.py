@@ -102,11 +102,18 @@ class TimeTests(unittest.TestCase):
         # each value the relativedelta might have.
         self.assertEqual(time.humanize_delta(relativedelta(days=2, hours=2), 'hours', 20), '2 days and 2 hours')
 
-    def test_humanize_delta_should_normal_usage(self):
-        """Testing humanize delta."""
+    def test_humanize_delta_mixed(self):
+        """humanize_delta should limit units to the given precision and the amount to max_units."""
         test_cases = (
+            (relativedelta(months=7, hours=12, seconds=13), 'hours', 2, '7 months and 12 hours'),
+            (relativedelta(years=2, months=11, days=4, seconds=19), 'hours', 2, '2 years and 11 months'),
+            (relativedelta(months=1, days=25, minutes=32, seconds=54), 'hours', 3, '1 month and 25 days'),
+            (relativedelta(years=9, hours=2, minutes=43), 'months', 4, '9 years'),
+            (relativedelta(days=5, minutes=22, seconds=49), 'minutes', 3, '5 days and 22 minutes'),
+            (relativedelta(days=21, hours=3, minutes=36, seconds=31), 'minutes', 2, '21 days and 3 hours'),
+            (relativedelta(minutes=27, seconds=6), 'days', 5, 'less than a day'),
             (relativedelta(days=2), 'seconds', 1, '2 days'),
-            (relativedelta(days=2, hours=2), 'seconds', 2, '2 days and 2 hours'),
+            (relativedelta(days=2, hours=2), 'minutes', 2, '2 days and 2 hours'),
             (relativedelta(days=2, hours=2), 'seconds', 1, '2 days'),
             (relativedelta(days=2, hours=2), 'days', 2, '2 days'),
         )
