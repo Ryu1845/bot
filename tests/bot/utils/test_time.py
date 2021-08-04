@@ -69,7 +69,7 @@ class TimeTests(unittest.TestCase):
 
         for expiry, date_from, max_units, expected in test_cases:
             with self.subTest(expiry=expiry, date_from=date_from, max_units=max_units, expected=expected):
-                self.assertEqual(time.format_infraction_with_duration(expiry, date_from, max_units), expected)
+                self.assertEqual(time.format_infraction_with_duration(expiry, date_from, max_units=max_units), expected)
 
     def test_format_infraction_with_duration_normal_usage(self):
         """format_infraction_with_duration should work for normal usage, across various durations."""
@@ -89,7 +89,7 @@ class TimeTests(unittest.TestCase):
 
         for expiry, date_from, max_units, expected in test_cases:
             with self.subTest(expiry=expiry, date_from=date_from, max_units=max_units, expected=expected):
-                self.assertEqual(time.format_infraction_with_duration(expiry, date_from, max_units), expected)
+                self.assertEqual(time.format_infraction_with_duration(expiry, date_from, max_units=max_units), expected)
 
     def test_until_expiration_with_duration_none_expiry(self):
         """until_expiration should work for None expiry."""

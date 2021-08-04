@@ -171,6 +171,7 @@ def format_relative(timestamp: ValidTimestamp) -> str:
 def format_infraction_with_duration(
     date_to: Union[str, datetime.datetime, None],
     date_from: Union[str, datetime.datetime, None] = None,
+    precision: str = "seconds",
     max_units: int = 2,
 ) -> Optional[str]:
     """
@@ -183,8 +184,7 @@ def format_infraction_with_duration(
     They do not have to be of the same type (e.g. one can be a string and the other a datetime).
     Assume datetimes are in UTC if they're naïve.
 
-    `max_units` specifies the maximum number of units of time to include in the duration. For
-    example, a value of 1 may include days but not hours.
+    Forward `precision` and `max_units` to `time.humanize_delta`.
 
     Return None if `date_to` is falsy.
     """
@@ -193,8 +193,7 @@ def format_infraction_with_duration(
 
     formatted_timestamp = discord_timestamp(date_to)
     delta = abs(get_delta(date_to, date_from))
-
-    duration = humanize_delta(delta, max_units=max_units)
+    duration = humanize_delta(delta, precision, max_units)
 
     return f"{formatted_timestamp} ({duration})"
 
