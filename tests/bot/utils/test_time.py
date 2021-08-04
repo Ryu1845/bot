@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 
 from bot.utils import time
+from tests._autospec import autospec
 
 
 class TimeTests(unittest.TestCase):
@@ -42,6 +43,13 @@ class TimeTests(unittest.TestCase):
             with self.subTest(max_units=max_units), self.assertRaises(ValueError) as error:
                 time.humanize_delta(relativedelta(days=2, hours=2), 'hours', max_units)
             self.assertEqual(str(error.exception), 'max_units must be positive')
+
+    @autospec(time, "discord_timestamp", return_value="<t:10000:R>")
+    def test_format_relative(self, mock_discord_timestamp):
+        """format_relative should use discord_timestamp with TimestampFormats.RELATIVE."""
+        actual = time.format_relative(10000)
+        mock_discord_timestamp.assert_called_once_with(10000, time.TimestampFormats.RELATIVE)
+        self.assertEqual(actual, mock_discord_timestamp.return_value)
 
     def test_format_with_duration_none_expiry(self):
         """format_with_duration should work for None expiry."""
