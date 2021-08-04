@@ -124,6 +124,17 @@ class TimeTests(unittest.TestCase):
                 time.humanize_delta(relativedelta(days=2, hours=2), 'hours', max_units)
             self.assertEqual(str(error.exception), 'max_units must be positive')
 
+    def test_relativedelta_to_timedelta(self):
+        """relativedelta_to_timedelta should return a timedelta equivalent to the given relativedelta."""
+        now = datetime.now()
+        relative_delta = relativedelta(years=1, months=10, days=12, hours=2, minutes=4, seconds=10, microseconds=11)
+
+        result = time.relativedelta_to_timedelta(relative_delta)
+
+        # Transitively check the deltas for equality by comparing the result of adding each to the same datetime.
+        self.assertEqual(now + relative_delta, now + result)
+        self.assertIsInstance(result, timedelta)
+
     @autospec(time, "discord_timestamp", return_value="<t:10000:R>")
     def test_format_relative(self, mock_discord_timestamp):
         """format_relative should use discord_timestamp with TimestampFormats.RELATIVE."""
