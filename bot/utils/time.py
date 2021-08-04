@@ -168,31 +168,31 @@ def format_relative(timestamp: ValidTimestamp) -> str:
     return discord_timestamp(timestamp, TimestampFormats.RELATIVE)
 
 
-def format_infraction_with_duration(
-    date_to: Union[str, datetime.datetime, None],
-    date_from: Union[str, datetime.datetime, None] = None,
+def format_with_duration(
+    timestamp: Union[str, datetime.datetime, None],
+    other_timestamp: Union[str, datetime.datetime, None] = None,
     precision: str = "seconds",
     max_units: int = 2,
 ) -> Optional[str]:
     """
-    Return `date_to` formatted as a Discord timestamp with the timestamp duration since `date_from`.
+    Format `timestamp` as a Discord timestamp with the duration between it and `other_timestamp`.
 
-    Use the current time if `date_from` is unspecified.
+    Use the current time if `other_timestamp` is unspecified.
 
-    The times can be ISO 8601 strings with or without a timezone.
+    The timestamps can be ISO 8601 strings with or without a timezone.
     They may also be datetime objects that are either aware or naïve.
     They do not have to be of the same type (e.g. one can be a string and the other a datetime).
     Assume datetimes are in UTC if they're naïve.
 
     Forward `precision` and `max_units` to `time.humanize_delta`.
 
-    Return None if `date_to` is falsy.
+    Return None if `timestamp` is falsy.
     """
-    if not date_to:
+    if not timestamp:
         return None
 
-    formatted_timestamp = discord_timestamp(date_to)
-    delta = abs(get_delta(date_to, date_from))
+    formatted_timestamp = discord_timestamp(timestamp)
+    delta = abs(get_delta(timestamp, other_timestamp))
     duration = humanize_delta(delta, precision, max_units)
 
     return f"{formatted_timestamp} ({duration})"
@@ -228,7 +228,7 @@ def get_delta(
 
     Use the current time if `end_time` is unspecified.
 
-    The times can be ISO 8601 strings with or without a timezone.
+    The timestamps can be ISO 8601 strings with or without a timezone.
     They may also be datetime objects that are either aware or naïve.
     They do not have to be of the same type (e.g. one can be a string and the other a datetime).
     Assume datetimes are in UTC if they're naïve.

@@ -131,7 +131,7 @@ class ModManagement(commands.Cog):
             confirm_messages.append("marked as permanent")
         elif duration is not None:
             request_data['expires_at'] = duration.isoformat()
-            expiry = time.format_infraction_with_duration(duration)
+            expiry = time.format_with_duration(duration)
             confirm_messages.append(f"set to expire on {expiry}")
         else:
             confirm_messages.append("expiry unchanged")
