@@ -182,17 +182,6 @@ def time_since(timestamp: Union[str, datetime.datetime]) -> str:
     return discord_timestamp(_normalise(timestamp), TimestampFormats.RELATIVE)
 
 
-def format_infraction(timestamp: Union[str, datetime.datetime]) -> str:
-    """
-    Format an infraction timestamp to a Discord timestamp.
-
-    `timestamp` can be an ISO 8601 string with or without a timezone.
-    It may also be a datetime object that is either aware or naïve.
-    Assume the datetime is in UTC if it is naïve.
-    """
-    return discord_timestamp(_normalise(timestamp))
-
-
 def format_infraction_with_duration(
     date_to: Union[str, datetime.datetime, None],
     date_from: Union[str, datetime.datetime, None] = None,
@@ -220,7 +209,7 @@ def format_infraction_with_duration(
     if not date_to:
         return None
 
-    date_to_formatted = format_infraction(date_to)
+    date_to_formatted = discord_timestamp(date_to)
 
     date_from = _normalise(date_from) if date_from else arrow.utcnow()
     date_to = _normalise(date_to)

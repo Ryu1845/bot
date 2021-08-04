@@ -478,7 +478,7 @@ class TalentPool(WatchChannel, Cog, name="Talentpool"):
             actor = guild.get_member(actor_id)
 
             reason = site_entry["reason"] or "*None*"
-            created = time.format_infraction(site_entry["inserted_at"])
+            created = time.discord_timestamp(site_entry["inserted_at"])
             entries.append(
                 f"Actor: {actor.mention if actor else actor_id}\nCreated: {created}\nReason: {reason}"
             )
@@ -487,7 +487,7 @@ class TalentPool(WatchChannel, Cog, name="Talentpool"):
 
         active = nomination_object["active"]
 
-        start_date = time.format_infraction(nomination_object["inserted_at"])
+        start_date = time.discord_timestamp(nomination_object["inserted_at"])
         if active:
             lines = textwrap.dedent(
                 f"""
@@ -501,7 +501,7 @@ class TalentPool(WatchChannel, Cog, name="Talentpool"):
                 """
             )
         else:
-            end_date = time.format_infraction(nomination_object["ended_at"])
+            end_date = time.discord_timestamp(nomination_object["ended_at"])
             lines = textwrap.dedent(
                 f"""
                 ===============

@@ -274,7 +274,7 @@ class ModManagement(commands.Cog):
         active = infraction["active"]
         user = infraction["user"]
         expires_at = infraction["expires_at"]
-        created = time.format_infraction(infraction["inserted_at"])
+        created = time.discord_timestamp(infraction["inserted_at"])
 
         # Format the user string.
         if user_obj := self.bot.get_user(user["id"]):
