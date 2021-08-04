@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from dateutil.relativedelta import relativedelta
 
@@ -83,6 +83,22 @@ class TimeTests(unittest.TestCase):
             ('2019-11-23T23:59:00Z', datetime(2017, 7, 21, 23, 0), '<t:1574553540:f> (2 years and 4 months)'),
             ('2019-11-23T23:59:00Z', datetime(2019, 11, 23, 23, 49, 5), '<t:1574553540:f> (9 minutes and 55 seconds)'),
             (None, datetime(2019, 11, 23, 23, 49, 5), None),
+        )
+
+        for timestamp, other, expected in test_cases:
+            with self.subTest(timestamp=timestamp, other=other, expected=expected):
+                self.assertEqual(time.format_with_duration(timestamp, other), expected)
+
+    def test_format_with_duration_different_types(self):
+        """Both format_with_duration timestamp args should support ISO 8601 strings and aware/naïve datetimes."""
+        test_cases = (
+            (
+                datetime(2019, 11, 23, 22, 9, tzinfo=timezone(timedelta(hours=2))),
+                datetime(2019, 11, 15, 20, 15, tzinfo=timezone.utc),
+                '<t:1574539740:f> (7 days and 23 hours)'
+            ),
+            (datetime(2019, 11, 23, 20, 58), '2019-11-23T20:53:00Z', '<t:1574542680:f> (5 minutes)'),
+            ('2019-11-24T00:00:00+00:00', '2019-11-23T21:59:00-02:00', '<t:1574553600:f> (1 minute)'),
         )
 
         for timestamp, other, expected in test_cases:
