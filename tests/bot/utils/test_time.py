@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from dateutil.relativedelta import relativedelta
 
@@ -9,6 +9,86 @@ from tests._autospec import autospec
 
 class TimeTests(unittest.TestCase):
     """Test helper functions in bot.utils.time."""
+
+    def test_discord_timestamp_posix(self):
+        """discord_timestamp should support UTC POSIX timestamps in seconds as floats or ints."""
+        test_cases = (
+            (10000, '<t:10000:f>'),
+            (-500, '<t:-500:f>'),
+            (1628132028.188289, '<t:1628132028:f>'),
+            (-9823.237182, '<t:-9823:f>'),
+        )
+
+        for timestamp, expected in test_cases:
+            with self.subTest(timestamp=timestamp, expected=expected):
+                self.assertEqual(time.discord_timestamp(timestamp), expected)
+
+    def test_discord_timestamp_iso_8601(self):
+        """discord_timestamp should support an ISO 8601 timestamp with or without a timezone and assume UTC."""
+        test_cases = (
+            ('2016-12-10T23:55:19', '<t:1481414119:f>'),
+            ('2004-05-23T04:10:43+00:00', '<t:1085285443:f>'),
+            ('1983-08-02 13:14:02-02:30', '<t:428687042:f>'),
+            ('1942-04-03 21:25:11Z', '<t:-875586889:f>'),
+        )
+
+        for timestamp, expected in test_cases:
+            with self.subTest(timestamp=timestamp, expected=expected):
+                self.assertEqual(time.discord_timestamp(timestamp), expected)
+
+    def test_discord_timestamp_datetime_naive(self):
+        """discord_timestamp should support a naïve datetime and assume UTC."""
+        test_cases = (
+            (datetime(2016, 12, 10, 23, 55, 19), '<t:1481414119:f>'),
+            (datetime(2004, 5, 23, 4, 10, 43), '<t:1085285443:f>'),
+            (datetime(1942, 4, 3, 21, 25, 11), '<t:-875586889:f>'),
+        )
+
+        for timestamp, expected in test_cases:
+            with self.subTest(timestamp=timestamp, expected=expected):
+                self.assertEqual(time.discord_timestamp(timestamp), expected)
+
+    def test_discord_timestamp_datetime_aware(self):
+        """discord_timestamp should support an aware datetime."""
+        tz_minus_2_30 = timezone(timedelta(hours=-2, minutes=-30))
+        test_cases = (
+            (datetime(2016, 12, 10, 23, 55, 19, tzinfo=timezone.utc), '<t:1481414119:f>'),
+            (datetime(2004, 5, 23, 4, 10, 43, tzinfo=timezone.utc), '<t:1085285443:f>'),
+            (datetime(1983, 8, 2, 13, 14, 2, tzinfo=tz_minus_2_30), '<t:428687042:f>'),
+            (datetime(1942, 4, 3, 21, 25, 11, tzinfo=timezone.utc), '<t:-875586889:f>'),
+        )
+
+        for timestamp, expected in test_cases:
+            with self.subTest(timestamp=timestamp, expected=expected):
+                self.assertEqual(time.discord_timestamp(timestamp), expected)
+
+    def test_discord_timestamp_date(self):
+        """discord_timestamp should support a date in UTC."""
+        test_cases = (
+            (date(2016, 12, 10), '<t:1481328000:f>'),
+            (date(2004, 5, 23), '<t:1085270400:f>'),
+            (date(1942, 4, 3), '<t:-875664000:f>'),
+        )
+
+        for timestamp, expected in test_cases:
+            with self.subTest(timestamp=timestamp, expected=expected):
+                self.assertEqual(time.discord_timestamp(timestamp), expected)
+
+    def test_discord_timestamp_formats(self):
+        """"discord_timestamp should format the timestamp in the given format."""
+        test_cases = (
+            (100, time.TimestampFormats.DATE_TIME, '<t:100:f>'),
+            (100, time.TimestampFormats.DAY_TIME, '<t:100:F>'),
+            (100, time.TimestampFormats.DATE_SHORT, '<t:100:d>'),
+            (100, time.TimestampFormats.DATE, '<t:100:D>'),
+            (100, time.TimestampFormats.TIME, '<t:100:t>'),
+            (100, time.TimestampFormats.TIME_SECONDS, '<t:100:T>'),
+            (100, time.TimestampFormats.RELATIVE, '<t:100:R>'),
+        )
+
+        for timestamp, format_, expected in test_cases:
+            with self.subTest(timestamp=timestamp, format=format_, expected=expected):
+                self.assertEqual(time.discord_timestamp(timestamp, format_), expected)
 
     def test_humanize_delta_handle_unknown_units(self):
         """humanize_delta should be able to handle unknown units, and will not abort."""
