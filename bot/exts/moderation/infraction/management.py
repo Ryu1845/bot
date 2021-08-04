@@ -1,11 +1,8 @@
 import logging
 import textwrap
 import typing as t
-from datetime import datetime
 
-import dateutil.parser
 import discord
-from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import escape_markdown
@@ -292,9 +289,8 @@ class ModManagement(commands.Cog):
         if expires_at is None:
             duration = "*Permanent*"
         else:
-            date_from = datetime.fromtimestamp(float(time.DISCORD_TIMESTAMP_REGEX.match(created).group(1)))
-            date_to = dateutil.parser.isoparse(expires_at).replace(tzinfo=None)
-            duration = time.humanize_delta(relativedelta(date_to, date_from))
+            delta = time.get_delta(infraction["inserted_at"], expires_at)
+            duration = time.humanize_delta(delta)
 
         lines = textwrap.dedent(f"""
             {"**===============**" if active else "==============="}

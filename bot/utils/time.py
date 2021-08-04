@@ -8,7 +8,6 @@ import dateutil.parser
 from dateutil.relativedelta import relativedelta
 
 EPOCH_AWARE = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
-DISCORD_TIMESTAMP_REGEX = re.compile(r"<t:(\d+):f>")
 
 _DURATION_REGEX = re.compile(
     r"((?P<years>\d+?) ?(years|year|Y|y) ?)?"
@@ -201,19 +200,14 @@ def format_infraction_with_duration(
     if not date_to:
         return None
 
-    date_to_formatted = discord_timestamp(date_to)
-
-    date_from = _normalise(date_from) if date_from else arrow.utcnow()
-    date_to = _normalise(date_to)
-
-    delta = relativedelta(date_to, date_from)
+    formatted_timestamp = discord_timestamp(date_to)
+    delta = get_delta(date_to, date_from)
     if absolute:
         delta = abs(delta)
 
     duration = humanize_delta(delta, max_units=max_units)
-    duration_formatted = f" ({duration})" if duration else ""
 
-    return f"{date_to_formatted}{duration_formatted}"
+    return f"{formatted_timestamp} ({duration})"
 
 
 def until_expiration(expiry: Union[str, datetime.datetime, None]) -> Optional[str]:
@@ -235,6 +229,26 @@ def until_expiration(expiry: Union[str, datetime.datetime, None]) -> Optional[st
         return "Expired"
 
     return format_relative(expiry)
+
+
+def get_delta(
+    start_time: Union[str, datetime.datetime],
+    end_time: Union[str, datetime.datetime, None] = None,
+) -> relativedelta:
+    """
+    Return a relativedelta representing the difference between two times.
+
+    Use the current time if `end_time` is unspecified.
+
+    The times can be ISO 8601 strings with or without a timezone.
+    They may also be datetime objects that are either aware or naïve.
+    They do not have to be of the same type (e.g. one can be a string and the other a datetime).
+    Assume datetimes are in UTC if they're naïve.
+    """
+    start_time = _normalise(start_time)
+    end_time = _normalise(end_time or datetime.datetime.utcnow())
+
+    return relativedelta(start_time, end_time)
 
 
 def _normalise(timestamp: Union[str, datetime.datetime]) -> datetime.datetime:
