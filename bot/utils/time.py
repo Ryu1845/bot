@@ -21,7 +21,7 @@ _DURATION_REGEX = re.compile(
 )
 
 
-ValidTimestamp = Union[int, str, datetime.datetime, datetime.date, datetime.timedelta, relativedelta]
+ValidTimestamp = Union[int, float, str, datetime.datetime, datetime.date, datetime.timedelta, relativedelta]
 
 
 class TimestampFormats(Enum):
