@@ -2,6 +2,7 @@ import unittest
 from datetime import date, datetime, timedelta, timezone
 
 from dateutil.relativedelta import relativedelta
+from freezegun import freeze_time
 
 from bot.utils import time
 from tests._autospec import autospec
@@ -334,7 +335,7 @@ class TimeTests(unittest.TestCase):
         self.assertEqual(time.until_expiration(None), "Permanent")
 
     def test_until_expiration_expired(self):
-        """until_expiration return "Expire" for expired timestamps."""
+        """until_expiration should return "Expire" for expired timestamps."""
         test_cases = (
             ('1000-12-12T00:01:00Z', 'Expired'),
             ('0500-11-23T20:09:00Z', 'Expired'),
@@ -344,16 +345,21 @@ class TimeTests(unittest.TestCase):
             with self.subTest(expiry=expiry, expected=expected):
                 self.assertEqual(time.until_expiration(expiry), expected)
 
-    def test_until_expiration_normal_usage(self):
-        """until_expiration should work for normal usage, across various durations."""
+    @freeze_time(datetime(2000, 12, 29))
+    @autospec(time, "discord_timestamp", return_value="test-value")
+    def test_until_expiration_not_expired(self, mock_discord_timestamp):
+        """If not permanent or expired, until_expiration should use discord_timestamp to return a relative timestamp."""
         test_cases = (
-            ('3000-12-12T00:01:00Z', '<t:32533488060:R>'),
-            ('3000-12-12T00:01:00Z', '<t:32533488060:R>'),
-            ('3000-12-12T00:00:00Z', '<t:32533488000:R>'),
-            ('3000-11-23T20:09:00Z', '<t:32531918940:R>'),
-            ('3000-11-23T20:09:00Z', '<t:32531918940:R>'),
+            datetime(3000, 12, 12, 0, 1, tzinfo=timezone.utc),
+            datetime(2050, 11, 23, tzinfo=timezone.utc),
+            datetime(2000, 12, 29, 20, 9, tzinfo=timezone.utc),
         )
 
-        for expiry, expected in test_cases:
-            with self.subTest(expiry=expiry, expected=expected):
-                self.assertEqual(time.until_expiration(expiry), expected)
+        for expiry in test_cases:
+            with self.subTest(expiry=expiry):
+                actual = time.until_expiration(expiry)
+
+                self.assertEqual(actual, mock_discord_timestamp.return_value)
+                mock_discord_timestamp.assert_called_once_with(expiry, time.TimestampFormats.RELATIVE)
+
+                mock_discord_timestamp.reset_mock()
