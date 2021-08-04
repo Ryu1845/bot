@@ -164,14 +164,14 @@ def relativedelta_to_timedelta(delta: relativedelta) -> datetime.timedelta:
     return utcnow + delta - utcnow
 
 
-def time_since(timestamp: Union[str, datetime.datetime]) -> str:
+def format_relative(timestamp: ValidTimestamp) -> str:
     """
     Format `timestamp` as a relative Discord timestamp.
 
     A relative timestamp describes how much time has elapsed since `timestamp` or how much time
     remains until `timestamp` is reached. See `time.discord_timestamp`'s documentation for details.
     """
-    return discord_timestamp(_normalise(timestamp), TimestampFormats.RELATIVE)
+    return discord_timestamp(timestamp, TimestampFormats.RELATIVE)
 
 
 def format_infraction_with_duration(

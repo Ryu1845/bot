@@ -15,7 +15,7 @@ from bot.decorators import in_whitelist
 from bot.pagination import LinePaginator
 from bot.utils import messages
 from bot.utils.checks import has_no_roles_check
-from bot.utils.time import time_since
+from bot.utils.time import format_relative
 
 log = logging.getLogger(__name__)
 
@@ -175,7 +175,7 @@ class Utils(Cog):
         lines = []
         for snowflake in snowflakes:
             created_at = snowflake_time(snowflake)
-            lines.append(f"**{snowflake}**\nCreated at {created_at} ({time_since(created_at)}).")
+            lines.append(f"**{snowflake}**\nCreated at {created_at} ({format_relative(created_at)}).")
 
         await LinePaginator.paginate(
             lines,
