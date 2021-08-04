@@ -115,6 +115,23 @@ class TimeTests(unittest.TestCase):
             with self.subTest(delta=delta, precision=precision, max_units=max_units, expected=expected):
                 self.assertEqual(time.humanize_delta(delta, precision, max_units), expected)
 
+    def test_humanize_delta_zero(self):
+        """humanize_delta should return "less than a ..." for a zeroed delta, except when precision is seconds."""
+        delta = relativedelta()
+        test_cases = (
+            ('seconds', '0 seconds'),
+            ('minutes', 'less than a minute'),
+            ('hours', 'less than a hour'),
+            ('days', 'less than a day'),
+            ('months', 'less than a month'),
+            ('years', 'less than a year'),
+        )
+
+        for precision, expected in test_cases:
+            for max_units in range(1, 7):
+                with self.subTest(delta=delta, precision=precision, max_units=max_units, expected=expected):
+                    self.assertEqual(time.humanize_delta(delta, precision, max_units), expected)
+
     def test_humanize_delta_raises_for_invalid_max_units(self):
         """humanize_delta should raises ValueError('max_units must be positive') for invalid max_units."""
         test_cases = (-1, 0)
