@@ -115,6 +115,70 @@ class TimeTests(unittest.TestCase):
             with self.subTest(delta=delta, precision=precision, max_units=max_units, expected=expected):
                 self.assertEqual(time.humanize_delta(delta, precision, max_units), expected)
 
+    def test_humanize_delta_precision(self):
+        """humanize_delta should omit units past the given precision."""
+        test_cases = (
+            (
+                relativedelta(years=8, months=11, days=8, hours=7, minutes=41, seconds=38, microseconds=33),
+                ('seconds', '8 years, 11 months, 8 days, 7 hours, 41 minutes and 38 seconds'),
+                ('minutes', '8 years, 11 months, 8 days, 7 hours and 41 minutes'),
+                ('hours', '8 years, 11 months, 8 days and 7 hours'),
+                ('days', '8 years, 11 months and 8 days'),
+                ('months', '8 years and 11 months'),
+                ('years', '8 years'),
+            ),
+            (
+                relativedelta(months=11, days=8, hours=7, minutes=41, seconds=38, microseconds=33),
+                ('seconds', '11 months, 8 days, 7 hours, 41 minutes and 38 seconds'),
+                ('minutes', '11 months, 8 days, 7 hours and 41 minutes'),
+                ('hours', '11 months, 8 days and 7 hours'),
+                ('days', '11 months and 8 days'),
+                ('months', '11 months'),
+                ('years', 'less than a year'),
+            ),
+            (
+                relativedelta(days=8, hours=7, minutes=41, seconds=38, microseconds=33),
+                ('seconds', '8 days, 7 hours, 41 minutes and 38 seconds'),
+                ('minutes', '8 days, 7 hours and 41 minutes'),
+                ('hours', '8 days and 7 hours'),
+                ('days', '8 days'),
+                ('months', 'less than a month'),
+                ('years', 'less than a year'),
+            ),
+            (
+                relativedelta(hours=7, minutes=41, seconds=38, microseconds=33),
+                ('seconds', '7 hours, 41 minutes and 38 seconds'),
+                ('minutes', '7 hours and 41 minutes'),
+                ('hours', '7 hours'),
+                ('days', 'less than a day'),
+                ('months', 'less than a month'),
+                ('years', 'less than a year'),
+            ),
+            (
+                relativedelta(minutes=41, seconds=38, microseconds=33),
+                ('seconds', '41 minutes and 38 seconds'),
+                ('minutes', '41 minutes'),
+                ('hours', 'less than a hour'),
+                ('days', 'less than a day'),
+                ('months', 'less than a month'),
+                ('years', 'less than a year'),
+            ),
+            (
+                relativedelta(seconds=38, microseconds=33),
+                ('seconds', '38 seconds'),
+                ('minutes', 'less than a minute'),
+                ('hours', 'less than a hour'),
+                ('days', 'less than a day'),
+                ('months', 'less than a month'),
+                ('years', 'less than a year'),
+            ),
+        )
+
+        for delta, *cases in test_cases:
+            for precision, expected in cases:
+                with self.subTest(delta=delta, precision=precision, max_units=6, expected=expected):
+                    self.assertEqual(time.humanize_delta(delta, precision, 6), expected)
+
     def test_humanize_delta_zero(self):
         """humanize_delta should return "less than a ..." for a zeroed delta, except when precision is seconds."""
         delta = relativedelta()
