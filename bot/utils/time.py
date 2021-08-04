@@ -224,18 +224,17 @@ def until_expiration(expiry: Union[str, datetime.datetime, None]) -> Optional[st
     It may also be a datetime object that is either aware or naïve.
     Assume the datetime is in UTC if it is naïve.
 
-    Return None if `expiry` is None or is in the past.
+    Return "Permanent" if `expiry` is None. Return "Expired" if `expiry` is in the past.
     """
     if not expiry:
-        return None
+        return "Permanent"
 
-    now = arrow.utcnow()
-    since = _normalise(expiry)
+    expiry = _normalise(expiry)
 
-    if since < now:
-        return None
+    if expiry < arrow.utcnow():
+        return "Expired"
 
-    return discord_timestamp(since, TimestampFormats.RELATIVE)
+    return discord_timestamp(expiry, TimestampFormats.RELATIVE)
 
 
 def _normalise(timestamp: Union[str, datetime.datetime]) -> datetime.datetime:
