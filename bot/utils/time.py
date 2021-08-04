@@ -234,7 +234,7 @@ def until_expiration(expiry: Union[str, datetime.datetime, None]) -> Optional[st
     if expiry < arrow.utcnow():
         return "Expired"
 
-    return discord_timestamp(expiry, TimestampFormats.RELATIVE)
+    return format_relative(expiry)
 
 
 def _normalise(timestamp: Union[str, datetime.datetime]) -> datetime.datetime:

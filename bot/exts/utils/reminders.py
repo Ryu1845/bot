@@ -18,7 +18,7 @@ from bot.utils.checks import has_any_role_check, has_no_roles_check
 from bot.utils.lock import lock_arg
 from bot.utils.messages import send_denial
 from bot.utils.scheduling import Scheduler
-from bot.utils.time import TimestampFormats, discord_timestamp, format_relative
+from bot.utils.time import format_relative
 
 log = logging.getLogger(__name__)
 
@@ -263,7 +263,7 @@ class Reminders(Cog):
             }
         )
 
-        mention_string = f"Your reminder will arrive {discord_timestamp(expiration, TimestampFormats.RELATIVE)}"
+        mention_string = f"Your reminder will arrive {format_relative(expiration)}"
 
         if mentions:
             mention_string += f" and will mention {len(mentions)} other(s)"
@@ -301,7 +301,7 @@ class Reminders(Cog):
         for content, remind_at, id_, mentions in reminders:
             # Parse and humanize the time, make it pretty :D
             remind_datetime = isoparse(remind_at).replace(tzinfo=None)
-            time = discord_timestamp(remind_datetime, TimestampFormats.RELATIVE)
+            time = format_relative(remind_datetime)
 
             mentions = ", ".join(
                 # Both Role and User objects have the `name` attribute
