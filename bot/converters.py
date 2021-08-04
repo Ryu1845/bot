@@ -16,8 +16,8 @@ from discord.utils import DISCORD_EPOCH, snowflake_time
 from bot.api import ResponseCodeError
 from bot.constants import URLs
 from bot.exts.info.doc import _inventory_parser
+from bot.utils import time
 from bot.utils.regex import INVITE_RE
-from bot.utils.time import parse_duration_string
 
 log = logging.getLogger(__name__)
 
@@ -308,7 +308,7 @@ class DurationDelta(Converter):
 
         The units need to be provided in descending order of magnitude.
         """
-        if not (delta := parse_duration_string(duration)):
+        if not (delta := time.parse_duration_string(duration)):
             raise BadArgument(f"`{duration}` is not a valid duration string.")
 
         return delta

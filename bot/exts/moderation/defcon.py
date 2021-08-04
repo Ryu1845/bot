@@ -17,9 +17,9 @@ from bot.bot import Bot
 from bot.constants import Channels, Colours, Emojis, Event, Icons, MODERATION_ROLES, Roles
 from bot.converters import DurationDelta, Expiry
 from bot.exts.moderation.modlog import ModLog
+from bot.utils import time
 from bot.utils.messages import format_user
 from bot.utils.scheduling import Scheduler
-from bot.utils.time import format_relative, humanize_delta, parse_duration_string, relativedelta_to_timedelta
 
 log = logging.getLogger(__name__)
 
@@ -74,6 +74,11 @@ class Defcon(Cog):
         """Get currently loaded ModLog cog instance."""
         return self.bot.get_cog("ModLog")
 
+    @property
+    def humanised_threshold(self) -> str:
+        """Return the threshold in a human-readable format."""
+        return time.humanize_delta(self.threshold) if self.threshold else '-'
+
     @defcon_settings.atomic_transaction
     async def _sync_settings(self) -> None:
         """On cog load, try to synchronize DEFCON settings to the API."""
@@ -85,7 +90,7 @@ class Defcon(Cog):
 
         try:
             settings = await self.defcon_settings.to_dict()
-            self.threshold = parse_duration_string(settings["threshold"]) if settings.get("threshold") else None
+            self.threshold = time.parse_duration_string(settings["threshold"]) if settings.get("threshold") else None
             self.expiry = datetime.fromisoformat(settings["expiry"]) if settings.get("expiry") else None
         except RedisError:
             log.exception("Unable to get DEFCON settings!")
@@ -99,7 +104,7 @@ class Defcon(Cog):
                 self.scheduler.schedule_at(self.expiry, 0, self._remove_threshold())
 
             self._update_notifier()
-            log.info(f"DEFCON synchronized: {humanize_delta(self.threshold) if self.threshold else '-'}")
+            log.info(f"DEFCON synchronized: {self.humanised_threshold}")
 
         self._update_channel_topic()
 
@@ -109,7 +114,7 @@ class Defcon(Cog):
         if self.threshold:
             now = datetime.utcnow()
 
-            if now - member.created_at < relativedelta_to_timedelta(self.threshold):
+            if now - member.created_at < time.relativedelta_to_timedelta(self.threshold):
                 log.info(f"Rejecting user {member}: Account is too new")
 
                 message_sent = False
@@ -151,8 +156,8 @@ class Defcon(Cog):
         embed = Embed(
             colour=Colour.blurple(), title="DEFCON Status",
             description=f"""
-                **Threshold:** {humanize_delta(self.threshold) if self.threshold else "-"}
-                **Expires:** {format_relative(self.expiry) if self.expiry else "-"}
+                **Threshold:** {self.humanised_threshold}
+                **Expires:** {time.format_relative(self.expiry) if self.expiry else "-"}
                 **Verification level:** {ctx.guild.verification_level.name}
                 """
         )
@@ -200,7 +205,7 @@ class Defcon(Cog):
 
     def _update_channel_topic(self) -> None:
         """Update the #defcon channel topic with the current DEFCON status."""
-        new_topic = f"{BASE_CHANNEL_TOPIC}\n(Threshold: {humanize_delta(self.threshold) if self.threshold else '-'})"
+        new_topic = f"{BASE_CHANNEL_TOPIC}\n(Threshold: {self.humanised_threshold})"
 
         self.mod_log.ignore(Event.guild_channel_update, Channels.defcon)
         asyncio.create_task(self.channel.edit(topic=new_topic))
@@ -236,11 +241,12 @@ class Defcon(Cog):
 
         expiry_message = ""
         if expiry:
-            expiry_message = f" for the next {humanize_delta(relativedelta(expiry, datetime.utcnow()), max_units=2)}"
+            humanised_expiry = time.humanize_delta(relativedelta(expiry, datetime.utcnow()), max_units=2)
+            expiry_message = f" for the next {humanised_expiry}"
 
         if self.threshold:
             channel_message = (
-                f"updated; accounts must be {humanize_delta(self.threshold)} "
+                f"updated; accounts must be {self.humanised_threshold} "
                 f"old to join the server{expiry_message}"
             )
         else:
@@ -266,7 +272,7 @@ class Defcon(Cog):
 
     def _log_threshold_stat(self, threshold: relativedelta) -> None:
         """Adds the threshold to the bot stats in days."""
-        threshold_days = relativedelta_to_timedelta(threshold).total_seconds() / SECONDS_IN_DAY
+        threshold_days = time.relativedelta_to_timedelta(threshold).total_seconds() / SECONDS_IN_DAY
         self.bot.stats.gauge("defcon.threshold", threshold_days)
 
     async def _send_defcon_log(self, action: Action, actor: User) -> None:
@@ -274,7 +280,7 @@ class Defcon(Cog):
         info = action.value
         log_msg: str = (
             f"**Staffer:** {actor.mention} {actor} (`{actor.id}`)\n"
-            f"{info.template.format(threshold=(humanize_delta(self.threshold) if self.threshold else '-'))}"
+            f"{info.template.format(threshold=self.humanised_threshold)}"
         )
         status_msg = f"DEFCON {action.name.lower()}"
 
@@ -293,10 +299,10 @@ class Defcon(Cog):
     @tasks.loop(hours=1)
     async def defcon_notifier(self) -> None:
         """Routinely notify moderators that DEFCON is active."""
-        await self.channel.send(f"Defcon is on and is set to {humanize_delta(self.threshold)}.")
+        await self.channel.send(f"Defcon is on and is set to {self.humanised_threshold}.")
 
     def cog_unload(self) -> None:
-        """Cancel the notifer and threshold removal tasks when the cog unloads."""
+        """Cancel the notifier and threshold removal tasks when the cog unloads."""
         log.trace("Cog unload: canceling defcon notifier task.")
         self.defcon_notifier.cancel()
         self.scheduler.cancel_all()

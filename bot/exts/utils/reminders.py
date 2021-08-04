@@ -14,11 +14,11 @@ from bot.bot import Bot
 from bot.constants import Guild, Icons, MODERATION_ROLES, POSITIVE_REPLIES, Roles, STAFF_ROLES
 from bot.converters import Duration
 from bot.pagination import LinePaginator
+from bot.utils import time
 from bot.utils.checks import has_any_role_check, has_no_roles_check
 from bot.utils.lock import lock_arg
 from bot.utils.messages import send_denial
 from bot.utils.scheduling import Scheduler
-from bot.utils.time import format_relative
 
 log = logging.getLogger(__name__)
 
@@ -190,7 +190,7 @@ class Reminders(Cog):
             embed.colour = discord.Colour.red()
             embed.set_author(
                 icon_url=Icons.remind_red,
-                name=f"Sorry it should have arrived {format_relative(expected_time)} !"
+                name=f"Sorry it should have arrived {time.format_relative(expected_time)} !"
             )
 
         additional_mentions = ' '.join(
@@ -263,7 +263,7 @@ class Reminders(Cog):
             }
         )
 
-        mention_string = f"Your reminder will arrive {format_relative(expiration)}"
+        mention_string = f"Your reminder will arrive {time.format_relative(expiration)}"
 
         if mentions:
             mention_string += f" and will mention {len(mentions)} other(s)"
@@ -301,7 +301,7 @@ class Reminders(Cog):
         for content, remind_at, id_, mentions in reminders:
             # Parse and humanize the time, make it pretty :D
             remind_datetime = isoparse(remind_at).replace(tzinfo=None)
-            time = format_relative(remind_datetime)
+            expiry = time.format_relative(remind_datetime)
 
             mentions = ", ".join(
                 # Both Role and User objects have the `name` attribute
@@ -310,7 +310,7 @@ class Reminders(Cog):
             mention_string = f"\n**Mentions:** {mentions}" if mentions else ""
 
             text = textwrap.dedent(f"""
-            **Reminder #{id_}:** *expires {time}* (ID: {id_}){mention_string}
+            **Reminder #{id_}:** *expires {expiry}* (ID: {id_}){mention_string}
             {content}
             """).strip()
 
