@@ -177,7 +177,6 @@ def format_infraction_with_duration(
     date_to: Union[str, datetime.datetime, None],
     date_from: Union[str, datetime.datetime, None] = None,
     max_units: int = 2,
-    absolute: bool = True
 ) -> Optional[str]:
     """
     Return `date_to` formatted as a Discord timestamp with the timestamp duration since `date_from`.
@@ -192,18 +191,13 @@ def format_infraction_with_duration(
     `max_units` specifies the maximum number of units of time to include in the duration. For
     example, a value of 1 may include days but not hours.
 
-    If `absolute` is True, use the absolute value of the duration delta. This prevents negative
-    values in the case that `date_to` is in the past relative to `date_from`.
-
     Return None if `date_to` is falsy.
     """
     if not date_to:
         return None
 
     formatted_timestamp = discord_timestamp(date_to)
-    delta = get_delta(date_to, date_from)
-    if absolute:
-        delta = abs(delta)
+    delta = abs(get_delta(date_to, date_from))
 
     duration = humanize_delta(delta, max_units=max_units)
 
