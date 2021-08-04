@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, Mock
 
 from async_rediscache import RedisSession
 from discord import PermissionOverwrite
+from freezegun import freeze_time
 
 from bot.constants import Channels, Guild, MODERATION_ROLES, Roles
 from bot.exts.moderation import silence
@@ -37,13 +38,6 @@ def tearDownModule():  # noqa: N802
     """Close the fakeredis session."""
     if redis_session:
         redis_loop.run_until_complete(redis_session.close())
-
-
-# Have to subclass it because builtins can't be patched.
-class PatchedDatetime(datetime):
-    """A datetime object with a mocked now() function."""
-
-    now = mock.create_autospec(datetime, "now")
 
 
 class SilenceNotifierTests(unittest.IsolatedAsyncioTestCase):
@@ -387,13 +381,12 @@ class RescheduleTests(unittest.IsolatedAsyncioTestCase):
         self.cog.notifier.add_channel.assert_not_called()
         self.cog.scheduler.schedule_later.assert_not_called()
 
-    @mock.patch.object(silence, "datetime", new=PatchedDatetime)
+    @freeze_time(datetime.fromtimestamp(1000, tz=timezone.utc))
     async def test_rescheduled_active(self):
         """Rescheduled active silences."""
         channels = [MockTextChannel(id=123), MockTextChannel(id=456)]
         self.bot.get_channel.side_effect = channels
         self.cog.unsilence_timestamps.items.return_value = [(123, 2000), (456, 3000)]
-        silence.datetime.now.return_value = datetime.fromtimestamp(1000, tz=timezone.utc)
 
         self.cog._unsilence_wrapper = mock.MagicMock()
         unsilence_return = self.cog._unsilence_wrapper.return_value
