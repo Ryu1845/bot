@@ -73,7 +73,7 @@ def discord_timestamp(timestamp: ValidTimestamp, format: TimestampFormats = Time
     elif isinstance(timestamp, datetime.timedelta):
         timestamp = timestamp.total_seconds()
     elif isinstance(timestamp, relativedelta):
-        timestamp = timestamp.seconds
+        timestamp = relativedelta_to_timedelta(timestamp).total_seconds()
 
     return f"<t:{int(timestamp)}:{format.value}>"
 
