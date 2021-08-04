@@ -132,6 +132,7 @@ def parse_duration_string(duration: str) -> Optional[relativedelta]:
     Converts a `duration` string to a relativedelta object.
 
     The function supports the following symbols for each unit of time:
+
     - years: `Y`, `y`, `year`, `years`
     - months: `m`, `month`, `months`
     - weeks: `w`, `W`, `week`, `weeks`
@@ -139,6 +140,7 @@ def parse_duration_string(duration: str) -> Optional[relativedelta]:
     - hours: `H`, `h`, `hour`, `hours`
     - minutes: `M`, `minute`, `minutes`
     - seconds: `S`, `s`, `second`, `seconds`
+
     The units need to be provided in descending order of magnitude.
     If the string does represent a durationdelta object, it will return None.
     """
