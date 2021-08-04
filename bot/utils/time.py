@@ -3,9 +3,11 @@ import re
 from enum import Enum
 from typing import Optional, Union
 
+import arrow
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
 
+EPOCH_AWARE = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
 RFC1123_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
 DISCORD_TIMESTAMP_REGEX = re.compile(r"<t:(\d+):f>")
 
@@ -67,9 +69,9 @@ def discord_timestamp(timestamp: ValidTimestamp, format: TimestampFormats = Time
 
     # Convert each possible timestamp class to an integer.
     if isinstance(timestamp, datetime.datetime):
-        timestamp = (timestamp.replace(tzinfo=None) - datetime.datetime.utcfromtimestamp(0)).total_seconds()
+        timestamp = (_normalise(timestamp) - EPOCH_AWARE).total_seconds()
     elif isinstance(timestamp, datetime.date):
-        timestamp = (timestamp - datetime.date.fromtimestamp(0)).total_seconds()
+        timestamp = (timestamp - EPOCH_AWARE.date()).total_seconds()
     elif isinstance(timestamp, datetime.timedelta):
         timestamp = timestamp.total_seconds()
     elif isinstance(timestamp, relativedelta):
@@ -161,9 +163,14 @@ def relativedelta_to_timedelta(delta: relativedelta) -> datetime.timedelta:
     return utcnow + delta - utcnow
 
 
-def time_since(past_datetime: datetime.datetime) -> str:
-    """Takes a datetime and returns a discord timestamp that describes how long ago that datetime was."""
-    return discord_timestamp(past_datetime, TimestampFormats.RELATIVE)
+def time_since(timestamp: Union[str, datetime.datetime]) -> str:
+    """
+    Format `timestamp` as a relative Discord timestamp.
+
+    A relative timestamp describes how much time has elapsed since `timestamp` or how much time
+    remains until `timestamp` is reached. See `time.discord_timestamp`'s documentation for details.
+    """
+    return discord_timestamp(_normalise(timestamp), TimestampFormats.RELATIVE)
 
 
 def parse_rfc1123(stamp: str) -> datetime.datetime:
@@ -171,33 +178,48 @@ def parse_rfc1123(stamp: str) -> datetime.datetime:
     return datetime.datetime.strptime(stamp, RFC1123_FORMAT).replace(tzinfo=datetime.timezone.utc)
 
 
-def format_infraction(timestamp: str) -> str:
-    """Format an infraction timestamp to a discord timestamp."""
-    return discord_timestamp(dateutil.parser.isoparse(timestamp))
+def format_infraction(timestamp: Union[str, datetime.datetime]) -> str:
+    """
+    Format an infraction timestamp to a Discord timestamp.
+
+    `timestamp` can be an ISO 8601 string with or without a timezone.
+    It may also be a datetime object that is either aware or naïve.
+    Assume the datetime is in UTC if it is naïve.
+    """
+    return discord_timestamp(_normalise(timestamp))
 
 
 def format_infraction_with_duration(
-    date_to: Optional[str],
-    date_from: Optional[datetime.datetime] = None,
+    date_to: Union[str, datetime.datetime, None],
+    date_from: Union[str, datetime.datetime, None] = None,
     max_units: int = 2,
     absolute: bool = True
 ) -> Optional[str]:
     """
-    Return `date_to` formatted as a discord timestamp with the timestamp duration since `date_from`.
+    Return `date_to` formatted as a Discord timestamp with the timestamp duration since `date_from`.
+
+    Use the current time if `date_from` is unspecified.
+
+    The times can be ISO 8601 strings with or without a timezone.
+    They may also be datetime objects that are either aware or naïve.
+    They do not have to be of the same type (e.g. one can be a string and the other a datetime).
+    Assume datetimes are in UTC if they're naïve.
 
     `max_units` specifies the maximum number of units of time to include in the duration. For
     example, a value of 1 may include days but not hours.
 
-    If `absolute` is True, the absolute value of the duration delta is used. This prevents negative
+    If `absolute` is True, use the absolute value of the duration delta. This prevents negative
     values in the case that `date_to` is in the past relative to `date_from`.
+
+    Return None if `date_to` is falsy.
     """
     if not date_to:
         return None
 
     date_to_formatted = format_infraction(date_to)
 
-    date_from = date_from or datetime.datetime.utcnow()
-    date_to = dateutil.parser.isoparse(date_to).replace(tzinfo=None, microsecond=0)
+    date_from = _normalise(date_from) if date_from else arrow.utcnow()
+    date_to = _normalise(date_to)
 
     delta = relativedelta(date_to, date_from)
     if absolute:
@@ -209,23 +231,40 @@ def format_infraction_with_duration(
     return f"{date_to_formatted}{duration_formatted}"
 
 
-def until_expiration(
-    expiry: Optional[str]
-) -> Optional[str]:
+def until_expiration(expiry: Union[str, datetime.datetime, None]) -> Optional[str]:
     """
-    Get the remaining time until infraction's expiration, in a discord timestamp.
+    Get the remaining time until an infraction's expiration as a Discord timestamp.
 
-    Returns a human-readable version of the remaining duration between datetime.utcnow() and an expiry.
-    Similar to time_since, except that this function doesn't error on a null input
-    and return null if the expiry is in the paste
+    `expiry` can be an ISO 8601 string with or without a timezone.
+    It may also be a datetime object that is either aware or naïve.
+    Assume the datetime is in UTC if it is naïve.
+
+    Return None if `expiry` is None or is in the past.
     """
     if not expiry:
         return None
 
-    now = datetime.datetime.utcnow()
-    since = dateutil.parser.isoparse(expiry).replace(tzinfo=None, microsecond=0)
+    now = arrow.utcnow()
+    since = _normalise(expiry)
 
     if since < now:
         return None
 
     return discord_timestamp(since, TimestampFormats.RELATIVE)
+
+
+def _normalise(timestamp: Union[str, datetime.datetime]) -> datetime.datetime:
+    """
+    Return a timezone-aware datetime object in UTC.
+
+    `timestamp` can be an ISO 8601 string with or without a timezone.
+    It may also be a datetime object that is either aware or naïve.
+    Assume the datetime is in UTC if it is naïve.
+    """
+    if isinstance(timestamp, str):
+        timestamp = dateutil.parser.isoparse(timestamp)
+
+    if timestamp.tzinfo is None:
+        return timestamp.replace(tzinfo=datetime.timezone.utc)
+    else:
+        return timestamp.astimezone(datetime.timezone.utc)
