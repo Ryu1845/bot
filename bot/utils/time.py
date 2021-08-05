@@ -71,9 +71,6 @@ def discord_timestamp(timestamp: ValidTimestamp, format: TimestampFormats = Time
     * datetime object that is either aware or naïve; assume UTC if it is naïve
     * date object
     """
-    if format not in TimestampFormats:
-        raise ValueError(f"Format can only be one of {', '.join(TimestampFormats.args)}, not {format}.")
-
     # Convert each possible timestamp class to an integer.
     if isinstance(timestamp, (str, datetime.datetime)):
         timestamp = (_normalise(timestamp) - EPOCH_AWARE).total_seconds()
