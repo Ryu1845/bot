@@ -363,3 +363,50 @@ class TimeTests(unittest.TestCase):
                 mock_discord_timestamp.assert_called_once_with(expiry, time.TimestampFormats.RELATIVE)
 
                 mock_discord_timestamp.reset_mock()
+
+    def test_get_delta(self):
+        """get_delta should support ISO 8601 and aware/naïve datetimes for both arguments."""
+        # The same time in different formats.
+        static_times = (
+            '2020-01-05T20:09:13Z',
+            '2020-01-06T01:09:13+05:00',
+            datetime(2020, 1, 5, 20, 9, 13),
+            datetime(2020, 1, 5, 18, 9, 13, tzinfo=timezone(timedelta(hours=-2))),
+        )
+
+        # Different times which are all relative to the static time above.
+        dynamic_times = (
+            ('2020-02-13T12:21:00Z', relativedelta(months=1, days=7, hours=16, minutes=11, seconds=47)),
+            ('2020-01-12T07:13:00+02:00', relativedelta(days=6, hours=9, minutes=3, seconds=47)),
+            (datetime(2020, 4, 7, 21, 43, 13), relativedelta(months=3, days=2, hours=1, minutes=34)),
+            (datetime(2020, 9, 9, 3, 4, 13, tzinfo=timezone.utc), relativedelta(months=8, days=3, hours=6, minutes=55)),
+            ('2014-08-25T19:00:13Z', relativedelta(years=-5, months=-4, days=-11, hours=-1, minutes=-9,)),
+            ('2020-01-05T08:34:12-06:00', relativedelta(hours=-5, minutes=-35, seconds=-1)),
+            (datetime(2019, 12, 30, 13, 34), relativedelta(days=-6, hours=-6, minutes=-35, seconds=-13)),
+            (datetime(2020, 1, 3, 4, 12, 13, tzinfo=timezone.utc), relativedelta(days=-2, hours=-15, minutes=-57)),
+        )
+
+        for dynamic, delta in dynamic_times:
+            for static in static_times:
+                # Test both permutations of each pair.
+                for start, end, expected in ((dynamic, static, delta), (static, dynamic, -delta)):
+                    with self.subTest(start=start, end=end, expected=expected):
+                        self.assertEqual(time.get_delta(start, end), expected)
+
+    @freeze_time(datetime(2019, 12, 31))
+    def test_get_delta_default_to_now(self):
+        """get_delta should use the current time if a second timestamp is not given."""
+        test_cases = (
+            ('2020-01-05T20:09:00Z', relativedelta(days=5, hours=20, minutes=9)),
+            ('2020-01-10T09:23:00+03:00', relativedelta(days=10, hours=6, minutes=23)),
+            (datetime(2020, 3, 2, 15, 12), relativedelta(months=2, days=2, hours=15, minutes=12)),
+            (datetime(2020, 2, 1, 2, tzinfo=timezone.utc), relativedelta(months=1, days=1, hours=2)),
+            ('2018-05-11T13:00:00Z', relativedelta(years=-1, months=-7, days=-19, hours=-11)),
+            ('2019-12-30T11:45:31-04:00', relativedelta(hours=-8, minutes=-14, seconds=-29)),
+            (datetime(2019, 11, 20, 10, 45), relativedelta(months=-1, days=-9, hours=-13, minutes=-15)),
+            (datetime(2019, 7, 10, 4, tzinfo=timezone.utc), relativedelta(months=-5, days=-20, hours=-20)),
+        )
+
+        for start, expected in test_cases:
+            with self.subTest(start=start, end=None, expected=expected):
+                self.assertEqual(time.get_delta(start, None), expected)
