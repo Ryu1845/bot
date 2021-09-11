@@ -76,7 +76,14 @@ class PythonNews(Cog):
     @staticmethod
     def escape_markdown(content: str) -> str:
         """Escape the markdown underlines and spoilers."""
-        return re.sub(r"[_|]", lambda match: "\\" + match[0], content)
+        return re.sub(
+            r"(?P<code_block>`.*?`)|(?P<markdown>[_|])",
+            lambda match: "\\" + match.groupdict()["markdown"]
+            if match.groupdict()["markdown"] is not None
+            else match.groupdict()["code_block"],
+            content,
+            flags=re.DOTALL,
+        )
 
     async def post_pep_news(self) -> None:
         """Fetch new PEPs and when they don't have announcement in #python-news, create it."""
