@@ -77,7 +77,7 @@ class PythonNews(Cog):
     def escape_markdown(content: str) -> str:
         """Escape the markdown underlines and spoilers."""
         return re.sub(
-            r"(?P<code_block>`.*?`)|(?P<markdown>[_|])",
+            r"(?P<code_block>`.*?`)|(?P<markdown>(?<!\\)[_|])",
             lambda match: "\\" + match.groupdict()["markdown"]
             if match.groupdict()["markdown"] is not None
             else match.groupdict()["code_block"],
